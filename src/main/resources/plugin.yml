@@ -1,0 +1,16 @@
+name: MinecraftS3Backup
+version: '${project.version}'
+main: me.rosenbach.s3backup.MinecraftS3Backup
+api-version: 1.18
+authors: [ Gigiga ]
+description: Backups your Minecraft world to an Amazon S3 bucket
+website: rosenbach.me
+commands:
+  backup:
+    description: Uploads the current world state to Amazon S3.
+permissions:
+  me.rosenbach.s3backup.backup:
+    description: Permission to trigger a new backup.
+    default: "op"
+
+
