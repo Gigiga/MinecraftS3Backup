@@ -1,9 +1,12 @@
 package me.rosenbach.s3backup;
 
+import lombok.Getter;
+import lombok.Setter;
 import me.rosenbach.s3backup.aws.AwsS3Client;
 import me.rosenbach.s3backup.commands.BackupCommand;
 import me.rosenbach.s3backup.enums.Configuration;
 import me.rosenbach.s3backup.tasks.BackupTask;
+import net.kyori.adventure.audience.MessageType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
@@ -18,8 +21,21 @@ public final class MinecraftS3Backup extends JavaPlugin {
 
     private static MinecraftS3Backup INSTANCE;
 
+    @Getter
+    @Setter
     private boolean running;
+
+    @Getter
+    @Setter
+    private boolean paused;
+
+    @Getter
+    @Setter
+    private long lastBackup;
+
+    @Getter
     private AwsS3Client s3;
+
     private final Timer scheduler;
 
     public MinecraftS3Backup() {
@@ -45,7 +61,7 @@ public final class MinecraftS3Backup extends JavaPlugin {
 
         if (intervalConfigured()) {
             long interval = this.getConfig().getLong(Configuration.BACKUP_INTERVAL.getKey()) * 60 * 1000;
-            scheduler.schedule(new BackupTask(this, Bukkit.getConsoleSender()), interval, interval);
+            scheduler.schedule(new BackupTask(this, Bukkit.getConsoleSender(), false), interval, interval);
 
             sendMessage(Bukkit.getConsoleSender(),
                     "Started, running backup task every " +
@@ -92,18 +108,6 @@ public final class MinecraftS3Backup extends JavaPlugin {
     }
 
     public void sendBroadcast(String broadcast) {
-        this.getServer().sendMessage(Component.text().content(broadcast).color(TextColor.color(11141120)));
-    }
-
-    public boolean isRunning() {
-        return running;
-    }
-
-    public void setRunning(boolean running) {
-        this.running = running;
-    }
-
-    public AwsS3Client getS3() {
-        return s3;
+        this.getServer().sendMessage(Component.text().content(broadcast).color(TextColor.color(11141120)), MessageType.SYSTEM);
     }
 }

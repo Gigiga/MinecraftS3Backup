@@ -2,6 +2,7 @@ package me.rosenbach.s3backup.tasks;
 
 import me.rosenbach.s3backup.MinecraftS3Backup;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tinyzip.TinyZip;
 
@@ -9,22 +10,37 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.TimerTask;
 
 public class BackupTask extends TimerTask {
 
     private final MinecraftS3Backup plugin;
     private final CommandSender sender;
+    private boolean manuallyTriggered;
 
-    public BackupTask(MinecraftS3Backup plugin, CommandSender sender) {
+    public BackupTask(MinecraftS3Backup plugin, CommandSender sender, boolean manuallyTriggered) {
         this.plugin = plugin;
         this.sender = sender;
+        this.manuallyTriggered = manuallyTriggered;
     }
 
     @Override
     public void run() {
+
+        if (!manuallyTriggered) {
+            if(plugin.isPaused()) {
+                plugin.sendMessage(sender, "Backups are paused. Please run " + ChatColor.DARK_PURPLE +
+                        "/backup resume" + ChatColor.GRAY + " to resume them");
+                return;
+            } else if (wasPlayerOnlineSinceLastUpdate()) {
+                plugin.sendMessage(sender, "No player was online since the last backup. Skipping this one");
+                return;
+            }
+        }
+
         if (plugin.isRunning()) {
-            plugin.sendMessage(sender, "Backup already running. Please try again in a few minutes.");
+            plugin.sendMessage(sender, "Backup already running. Please try again in a few minutes");
             return;
         }
 
@@ -41,6 +57,7 @@ public class BackupTask extends TimerTask {
         } finally {
             Bukkit.getScheduler().callSyncMethod(plugin, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "save-on"));
             plugin.setRunning(false);
+            plugin.setLastBackup(System.currentTimeMillis());
         }
     }
 
@@ -61,5 +78,10 @@ public class BackupTask extends TimerTask {
         plugin.sendMessage(sender, "Backup created");
 
         return path.toFile();
+    }
+
+    private boolean wasPlayerOnlineSinceLastUpdate() {
+        return Arrays.stream(plugin.getServer().getOfflinePlayers())
+                .anyMatch(offlinePlayer -> offlinePlayer.getLastSeen() > plugin.getLastBackup());
     }
 }
