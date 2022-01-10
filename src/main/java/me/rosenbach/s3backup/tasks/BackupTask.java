@@ -17,7 +17,7 @@ public class BackupTask extends TimerTask {
 
     private final MinecraftS3Backup plugin;
     private final CommandSender sender;
-    private boolean manuallyTriggered;
+    private final boolean manuallyTriggered;
 
     public BackupTask(MinecraftS3Backup plugin, CommandSender sender, boolean manuallyTriggered) {
         this.plugin = plugin;
@@ -33,7 +33,7 @@ public class BackupTask extends TimerTask {
                 plugin.sendMessage(sender, "Backups are paused. Please run " + ChatColor.DARK_PURPLE +
                         "/backup resume" + ChatColor.GRAY + " to resume them");
                 return;
-            } else if (wasPlayerOnlineSinceLastUpdate()) {
+            } else if (!wasPlayerOnlineSinceLastUpdate()) {
                 plugin.sendMessage(sender, "No player was online since the last backup. Skipping this one");
                 return;
             }
