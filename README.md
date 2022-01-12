@@ -10,7 +10,7 @@ To use it, you need an AWS-Developer account with an IAM user and a S3-Bucket cr
 
 This plugin supports both login to AWS via credentials file or by providing the creditials in the plugin configuration.
 
-If you want to use the plugin configuration file add your IAM account credentials to the config.yaml in the MinecraftS3Bucket
+If you want to use the plugin configuration file add your IAM account credentials to the config.yml in the S3ServerBackup plugin folder.
 
 ```
 access-key-id: <your access-key>
@@ -22,6 +22,15 @@ backup-interval: 360
 ```
 
 The backup-interval configuration defines the minutes between to backups. Leave it emtpy to disable automatic backups.
+
+### Minecraft command
+
+The plugin provides the /backup command to use in Minecraft. You need to be OP to use it.
+The following parameters are supported:
+
+* **now** Starts an backup process
+* **pause** Pauses the automatic backups until they are resumed or the server is restarted
+* **resume** Resumes the automatic backups
 
 ## Disclaimer
 
