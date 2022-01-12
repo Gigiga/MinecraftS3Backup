@@ -1,6 +1,6 @@
 package me.rosenbach.s3backup.tasks;
 
-import me.rosenbach.s3backup.MinecraftS3Backup;
+import me.rosenbach.s3backup.S3ServerBackup;
 import me.rosenbach.s3backup.enums.Configuration;
 import org.bukkit.command.CommandSender;
 
@@ -8,11 +8,11 @@ import java.io.File;
 
 public class UploadTask implements Runnable{
 
-    private final MinecraftS3Backup plugin;
+    private final S3ServerBackup plugin;
     private final CommandSender sender;
     private final File backup;
 
-    public UploadTask(MinecraftS3Backup plugin, CommandSender sender, File backup) {
+    public UploadTask(S3ServerBackup plugin, CommandSender sender, File backup) {
         this.plugin = plugin;
         this.sender = sender;
         this.backup = backup;

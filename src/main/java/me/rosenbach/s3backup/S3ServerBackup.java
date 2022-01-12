@@ -17,9 +17,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Objects;
 import java.util.Timer;
 
-public final class MinecraftS3Backup extends JavaPlugin {
+public final class S3ServerBackup extends JavaPlugin {
 
-    private static MinecraftS3Backup INSTANCE;
+    private static S3ServerBackup INSTANCE;
 
     @Getter
     @Setter
@@ -38,7 +38,7 @@ public final class MinecraftS3Backup extends JavaPlugin {
 
     private final Timer scheduler;
 
-    public MinecraftS3Backup() {
+    public S3ServerBackup() {
         INSTANCE = this;
         scheduler = new Timer();
     }
@@ -47,17 +47,23 @@ public final class MinecraftS3Backup extends JavaPlugin {
     public void onEnable() {
         this.saveDefaultConfig();
 
-        if(!configValid()) {
-            sendMessage(Bukkit.getConsoleSender(), "Your config is invalid. Please check");
+        if(!minimalConfigValid()) {
+            sendMessage(Bukkit.getConsoleSender(), "Your config is invalid. Please check!");
             return;
         }
 
-        registerCommands();
+        String region = this.getConfig().getString(Configuration.REGION.getKey());
 
-        s3 = new AwsS3Client(
-                this.getConfig().getString(Configuration.REGION.getKey()),
-                this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey()),
-                this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey()));
+        if(useCredentialsFile()) {
+            s3 = new AwsS3Client(region);
+        } else {
+            s3 = new AwsS3Client(
+                    region,
+                    this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey()),
+                    this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey()));
+        }
+
+        registerCommands();
 
         if (intervalConfigured()) {
             long interval = this.getConfig().getLong(Configuration.BACKUP_INTERVAL.getKey()) * 60 * 1000;
@@ -77,21 +83,24 @@ public final class MinecraftS3Backup extends JavaPlugin {
         sendMessage(Bukkit.getConsoleSender(), "Stopped");
     }
 
-    public static MinecraftS3Backup getInstance() {
+    public static S3ServerBackup getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new MinecraftS3Backup();
+            INSTANCE = new S3ServerBackup();
         }
 
         return INSTANCE;
     }
 
-    private boolean configValid() {
-        boolean accessKeyFilled = !Objects.requireNonNull(this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey())).isEmpty();
-        boolean accessKeySecretFilled = !Objects.requireNonNull(this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey())).isEmpty();
+    private boolean useCredentialsFile() {
+        return Objects.requireNonNull(this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey())).isEmpty() &&
+                Objects.requireNonNull(this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey())).isEmpty();
+    }
+
+    private boolean minimalConfigValid() {
         boolean regionFilled = !Objects.requireNonNull(this.getConfig().getString(Configuration.REGION.getKey())).isEmpty();
         boolean bucketFilled = !Objects.requireNonNull(this.getConfig().getString(Configuration.BUCKET.getKey())).isEmpty();
 
-        return accessKeyFilled && accessKeySecretFilled && regionFilled && bucketFilled;
+        return regionFilled && bucketFilled;
     }
 
     private boolean intervalConfigured() {

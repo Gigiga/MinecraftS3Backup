@@ -1,6 +1,6 @@
 package me.rosenbach.s3backup.tasks;
 
-import me.rosenbach.s3backup.MinecraftS3Backup;
+import me.rosenbach.s3backup.S3ServerBackup;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -15,11 +15,11 @@ import java.util.TimerTask;
 
 public class BackupTask extends TimerTask {
 
-    private final MinecraftS3Backup plugin;
+    private final S3ServerBackup plugin;
     private final CommandSender sender;
     private final boolean manuallyTriggered;
 
-    public BackupTask(MinecraftS3Backup plugin, CommandSender sender, boolean manuallyTriggered) {
+    public BackupTask(S3ServerBackup plugin, CommandSender sender, boolean manuallyTriggered) {
         this.plugin = plugin;
         this.sender = sender;
         this.manuallyTriggered = manuallyTriggered;

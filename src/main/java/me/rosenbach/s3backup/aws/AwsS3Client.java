@@ -11,10 +11,13 @@ import software.amazon.awssdk.services.s3.model.*;
 import java.io.File;
 
 public class AwsS3Client {
-    private S3Client s3;
+    private final S3Client s3;
+
+    public AwsS3Client(String region) {
+        s3 = S3Client.builder().region(Region.of(region)).build();
+    }
 
     public AwsS3Client(String region, String accessKey, String accessKeySecret) {
-
         AwsCredentials credentials = AwsBasicCredentials.create(accessKey, accessKeySecret);
         s3 = S3Client.builder().region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
