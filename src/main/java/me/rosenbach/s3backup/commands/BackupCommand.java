@@ -27,16 +27,16 @@ public class BackupCommand implements CommandExecutor {
             case "now":
                 Bukkit.getScheduler().runTaskAsynchronously(S3ServerBackup.getInstance(),
                         new BackupTask(S3ServerBackup.getInstance(), sender, true));
-                break;
+                return true;
             case "pause":
                 S3ServerBackup.getInstance().setPaused(true);
                 S3ServerBackup.getInstance().sendMessage(sender, "Backups paused. Run " + ChatColor.DARK_PURPLE + " /backup resume"
                         + ChatColor.GRAY + " to resume them");
-                break;
+                return true;
             case "resume":
                 S3ServerBackup.getInstance().setPaused(false);
                 S3ServerBackup.getInstance().sendMessage(sender, "Backups resumed");
-                break;
+                return true;
         }
 
         return false;

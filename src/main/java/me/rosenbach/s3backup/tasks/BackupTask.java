@@ -5,11 +5,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tinyzip.TinyZip;
+import org.tinyzip.parameters.ZipParameters;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.TimerTask;
 
@@ -69,11 +70,20 @@ public class BackupTask extends TimerTask {
 
     private File createBackupZip() throws IOException {
         plugin.sendMessage(sender, "Creating backup");
-        String backupName = LocalDateTime.now().toString();
         String tempPath = System.getProperty("java.io.tmpdir");
 
-        Path path = Paths.get(tempPath.concat("/").concat(backupName).concat(".zip"));
-        TinyZip.zip(path, Paths.get(""));
+        Path path = Paths.get(tempPath.concat("/").concat("backup").concat(".zip"));
+
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException exception) {
+            plugin.sendMessage(sender, "There was an error deleting the previous file.");
+        }
+
+        ZipParameters parameters = new ZipParameters((progress, filename) ->
+                plugin.sendMessage(sender, "Progress: " + String.format("%.2f", progress) + "%"));
+
+        TinyZip.zip(path, parameters, Paths.get(""));
 
         plugin.sendMessage(sender, "Backup created");
 

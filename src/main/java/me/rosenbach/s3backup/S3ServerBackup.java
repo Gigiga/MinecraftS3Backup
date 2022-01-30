@@ -14,8 +14,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
-import java.util.Timer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public final class S3ServerBackup extends JavaPlugin {
 
@@ -36,11 +42,12 @@ public final class S3ServerBackup extends JavaPlugin {
     @Getter
     private AwsS3Client s3;
 
-    private final Timer scheduler;
+    @Getter
+    private final ScheduledExecutorService scheduler;
 
     public S3ServerBackup() {
         INSTANCE = this;
-        scheduler = new Timer();
+        scheduler = Executors.newScheduledThreadPool(1);
     }
 
     @Override
@@ -66,12 +73,25 @@ public final class S3ServerBackup extends JavaPlugin {
         registerCommands();
 
         if (intervalConfigured()) {
-            long interval = this.getConfig().getLong(Configuration.BACKUP_INTERVAL.getKey()) * 60 * 1000;
-            scheduler.schedule(new BackupTask(this, Bukkit.getConsoleSender(), false), interval, interval);
+            for (String time : this.getConfig().getStringList(Configuration.BACKUP_TIMES.getKey())) {
+                LocalDateTime runAt = LocalDateTime.of(LocalDate.now(),LocalTime.parse(time));
 
+                long secondsUntilFirstRun;
+                if (runAt.isBefore(LocalDateTime.now())) {
+                    secondsUntilFirstRun = LocalDateTime.now().until(
+                            runAt.plus(1, ChronoUnit.DAYS), ChronoUnit.SECONDS);
+                } else {
+                    secondsUntilFirstRun = LocalDateTime.now().until(runAt, ChronoUnit.SECONDS);
+                }
+
+                BackupTask backupTask = new BackupTask(this, Bukkit.getConsoleSender(), false);
+                scheduler.scheduleAtFixedRate(
+                        backupTask, secondsUntilFirstRun, TimeUnit.DAYS.toSeconds(1), TimeUnit.SECONDS);
+
+            }
             sendMessage(Bukkit.getConsoleSender(),
-                    "Started, running backup task every " +
-                            this.getConfig().getLong(Configuration.BACKUP_INTERVAL.getKey()) + " minutes");
+                    "Started, running backups at " +
+                            this.getConfig().getStringList(Configuration.BACKUP_TIMES.getKey()));
         } else {
             sendMessage(Bukkit.getConsoleSender(), "Started, no automatic backup configured");
         }
@@ -79,7 +99,8 @@ public final class S3ServerBackup extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        scheduler.cancel();
+        scheduler.shutdown();
+        Bukkit.getScheduler().cancelTasks(this);
         sendMessage(Bukkit.getConsoleSender(), "Stopped");
     }
 
@@ -92,19 +113,24 @@ public final class S3ServerBackup extends JavaPlugin {
     }
 
     private boolean useCredentialsFile() {
-        return Objects.requireNonNull(this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey())).isEmpty() &&
-                Objects.requireNonNull(this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey())).isEmpty();
+        return Objects.requireNonNull(
+                this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey())).isEmpty() &&
+                Objects.requireNonNull(
+                        this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey())).isEmpty();
     }
 
     private boolean minimalConfigValid() {
-        boolean regionFilled = !Objects.requireNonNull(this.getConfig().getString(Configuration.REGION.getKey())).isEmpty();
-        boolean bucketFilled = !Objects.requireNonNull(this.getConfig().getString(Configuration.BUCKET.getKey())).isEmpty();
+        boolean regionFilled = !Objects.requireNonNull(
+                this.getConfig().getString(Configuration.REGION.getKey())).isEmpty();
+        boolean bucketFilled = !Objects.requireNonNull(
+                this.getConfig().getString(Configuration.BUCKET.getKey())).isEmpty();
 
         return regionFilled && bucketFilled;
     }
 
     private boolean intervalConfigured() {
-        return !Objects.requireNonNull(this.getConfig().getString(Configuration.BACKUP_INTERVAL.getKey())).isEmpty();
+        return !Objects.requireNonNull(
+                this.getConfig().getStringList(Configuration.BACKUP_TIMES.getKey())).isEmpty();
     }
 
     private void registerCommands() {

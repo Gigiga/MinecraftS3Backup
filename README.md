@@ -17,11 +17,13 @@ access-key-id: <your access-key>
 access-key-secret: <your access-key-secret>
 bucket: <name of your bucket>
 region: <the region your bucket belongs to>
-backup-interval: 360
+backup-times:
+  - "12:00"
+  - "22:00"
 
 ```
 
-The backup-interval configuration defines the minutes between to backups. Leave it emtpy to disable automatic backups.
+The backup-times configuration defines the time (in 24h format) at which a backup is executed. Leave it emtpy to disable automatic backups.
 
 ### Minecraft command
 

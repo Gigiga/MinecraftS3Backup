@@ -1,5 +1,8 @@
+postfix: ""
 access-key-id: ""
 access-key-secret: ""
 bucket: ""
 region: ""
-backup-interval: 360
+backup-times:
+  - "12:00"
+  - "22:00"

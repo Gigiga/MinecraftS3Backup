@@ -23,10 +23,10 @@ public class AwsS3Client {
                 .credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
     }
 
-    public void putObject(String bucket, File file) {
+    public void putObject(String bucket, String filename, File file) {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
-                .key(file.getName())
+                .key(filename)
                 .build();
 
         s3.putObject(objectRequest, RequestBody.fromFile(file));
