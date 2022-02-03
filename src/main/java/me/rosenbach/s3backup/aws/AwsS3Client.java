@@ -1,34 +1,49 @@
 package me.rosenbach.s3backup.aws;
 
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.auth.credentials.*;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.transfer.s3.S3ClientConfiguration;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.Upload;
 
 import java.io.File;
 
 public class AwsS3Client {
-    private final S3Client s3;
+    private final S3TransferManager transferManager;
+    private final long partSize = 10;
 
-    public AwsS3Client(String region) {
-        s3 = S3Client.builder().region(Region.of(region)).build();
+    public AwsS3Client(double uploadSpeed) {
+        S3ClientConfiguration s3ClientConfiguration =
+                S3ClientConfiguration.builder()
+                        .minimumPartSizeInBytes(partSize * 1024 * 1024)
+                        .targetThroughputInGbps(uploadSpeed)
+                        .build();
+
+        transferManager = S3TransferManager.builder().s3ClientConfiguration(s3ClientConfiguration).build();
     }
 
-    public AwsS3Client(String region, String accessKey, String accessKeySecret) {
-        AwsCredentials credentials = AwsBasicCredentials.create(accessKey, accessKeySecret);
-        s3 = S3Client.builder().region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(credentials)).build();
+    public AwsS3Client(String region, String accessKey, String accessKeySecret, double uploadSpeed) {
+        S3ClientConfiguration s3ClientConfiguration =
+                S3ClientConfiguration.builder()
+                        .region(Region.of(region))
+                        .credentialsProvider(StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(accessKey, accessKeySecret)))
+                        .minimumPartSizeInBytes(partSize * 1024 * 1024)
+                        .targetThroughputInGbps(uploadSpeed)
+                        .build();
+
+        transferManager = S3TransferManager.builder().s3ClientConfiguration(s3ClientConfiguration).build();
     }
 
-    public void putObject(String bucket, String filename, File file) {
-        PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(bucket)
-                .key(filename)
-                .build();
+    public void putObject(String bucket, String key, File file) {
+        Upload upload =
+                transferManager.upload(b -> b.putObjectRequest(r -> r.bucket(bucket).key(key))
+                        .source(file.toPath()));
 
-        s3.putObject(objectRequest, RequestBody.fromFile(file));
+        upload.completionFuture().join();
+    }
+
+    public void close() {
+        transferManager.close();
     }
 }

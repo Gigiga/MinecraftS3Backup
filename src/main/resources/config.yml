@@ -3,6 +3,7 @@ access-key-id: ""
 access-key-secret: ""
 bucket: ""
 region: ""
+upload-speed: 0.05
 backup-times:
   - "12:00"
   - "22:00"

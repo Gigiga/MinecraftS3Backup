@@ -60,14 +60,16 @@ public final class S3ServerBackup extends JavaPlugin {
         }
 
         String region = this.getConfig().getString(Configuration.REGION.getKey());
+        double uploadSpeed = this.getConfig().getDouble(Configuration.UPLOAD_SPEED.getKey());
 
         if(useCredentialsFile()) {
-            s3 = new AwsS3Client(region);
+            s3 = new AwsS3Client(uploadSpeed);
         } else {
             s3 = new AwsS3Client(
                     region,
                     this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey()),
-                    this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey()));
+                    this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey()),
+                    uploadSpeed);
         }
 
         registerCommands();
@@ -101,6 +103,7 @@ public final class S3ServerBackup extends JavaPlugin {
     public void onDisable() {
         scheduler.shutdown();
         Bukkit.getScheduler().cancelTasks(this);
+        s3.close();
         sendMessage(Bukkit.getConsoleSender(), "Stopped");
     }
 
@@ -116,16 +119,18 @@ public final class S3ServerBackup extends JavaPlugin {
         return Objects.requireNonNull(
                 this.getConfig().getString(Configuration.ACCESS_KEY_ID.getKey())).isEmpty() &&
                 Objects.requireNonNull(
-                        this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey())).isEmpty();
+                        this.getConfig().getString(Configuration.ACCESS_KEY_SECRET.getKey())).isEmpty() &&
+                Objects.requireNonNull(
+                this.getConfig().getString(Configuration.REGION.getKey())).isEmpty();
     }
 
     private boolean minimalConfigValid() {
-        boolean regionFilled = !Objects.requireNonNull(
-                this.getConfig().getString(Configuration.REGION.getKey())).isEmpty();
         boolean bucketFilled = !Objects.requireNonNull(
                 this.getConfig().getString(Configuration.BUCKET.getKey())).isEmpty();
+        boolean uploadSpeedFilled = !Objects.requireNonNull(
+                this.getConfig().getString(Configuration.UPLOAD_SPEED.getKey())).isEmpty();
 
-        return regionFilled && bucketFilled;
+        return bucketFilled && uploadSpeedFilled;
     }
 
     private boolean intervalConfigured() {

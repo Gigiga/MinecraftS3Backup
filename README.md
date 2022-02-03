@@ -17,11 +17,14 @@ access-key-id: <your access-key>
 access-key-secret: <your access-key-secret>
 bucket: <name of your bucket>
 region: <the region your bucket belongs to>
+upload-speed: 0.05
 backup-times:
   - "12:00"
   - "22:00"
 
 ```
+
+The upload-speed config indicates which bandwith the plugin should use to upload the backup. The number is in Gbps. Adjust it according to the upload speed of your connection.
 
 The backup-times configuration defines the time (in 24h format) at which a backup is executed. Leave it emtpy to disable automatic backups.
 

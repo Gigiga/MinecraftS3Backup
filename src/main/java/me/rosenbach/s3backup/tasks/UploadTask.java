@@ -26,11 +26,13 @@ public class UploadTask implements Runnable{
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd/HHmmss");
         String backupName = LocalDateTime.now().format(formatter)
                 .concat("_")
-                .concat(plugin.getConfig().getString(Configuration.POSTFIX.getKey()));
+                .concat(plugin.getConfig().getString(Configuration.POSTFIX.getKey(), "backup"));
 
         try {
             plugin.sendMessage(sender, "Upload starting");
-            plugin.getS3().putObject(plugin.getConfig().getString(Configuration.BUCKET.getKey()), backupName, backup);
+            String bucket = plugin.getConfig().getString(Configuration.BUCKET.getKey());
+            plugin.getS3().putObject(bucket, backupName, backup);
+
             plugin.sendMessage(sender, "Upload done");
         } finally {
             backup.delete();
