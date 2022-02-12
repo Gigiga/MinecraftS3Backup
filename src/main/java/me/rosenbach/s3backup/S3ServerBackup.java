@@ -103,7 +103,6 @@ public final class S3ServerBackup extends JavaPlugin {
     public void onDisable() {
         scheduler.shutdown();
         Bukkit.getScheduler().cancelTasks(this);
-        s3.close();
         sendMessage(Bukkit.getConsoleSender(), "Stopped");
     }
 

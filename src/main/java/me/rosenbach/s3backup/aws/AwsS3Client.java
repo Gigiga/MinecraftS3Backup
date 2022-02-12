@@ -9,21 +9,20 @@ import software.amazon.awssdk.transfer.s3.Upload;
 import java.io.File;
 
 public class AwsS3Client {
-    private final S3TransferManager transferManager;
     private final long partSize = 10;
 
+    private final S3ClientConfiguration s3ClientConfiguration;
+
     public AwsS3Client(double uploadSpeed) {
-        S3ClientConfiguration s3ClientConfiguration =
+        s3ClientConfiguration =
                 S3ClientConfiguration.builder()
                         .minimumPartSizeInBytes(partSize * 1024 * 1024)
                         .targetThroughputInGbps(uploadSpeed)
                         .build();
-
-        transferManager = S3TransferManager.builder().s3ClientConfiguration(s3ClientConfiguration).build();
     }
 
     public AwsS3Client(String region, String accessKey, String accessKeySecret, double uploadSpeed) {
-        S3ClientConfiguration s3ClientConfiguration =
+        s3ClientConfiguration =
                 S3ClientConfiguration.builder()
                         .region(Region.of(region))
                         .credentialsProvider(StaticCredentialsProvider.create(
@@ -31,19 +30,19 @@ public class AwsS3Client {
                         .minimumPartSizeInBytes(partSize * 1024 * 1024)
                         .targetThroughputInGbps(uploadSpeed)
                         .build();
-
-        transferManager = S3TransferManager.builder().s3ClientConfiguration(s3ClientConfiguration).build();
     }
 
     public void putObject(String bucket, String key, File file) {
-        Upload upload =
-                transferManager.upload(b -> b.putObjectRequest(r -> r.bucket(bucket).key(key))
-                        .source(file.toPath()));
 
-        upload.completionFuture().join();
-    }
+        try (S3TransferManager transferManager = S3TransferManager.builder()
+                .s3ClientConfiguration(s3ClientConfiguration).build()) {
 
-    public void close() {
-        transferManager.close();
+            Upload upload =
+                    transferManager.upload(b -> b.putObjectRequest(r -> r.bucket(bucket).key(key))
+                            .source(file.toPath()));
+
+            upload.completionFuture().join();
+        }
+
     }
 }
