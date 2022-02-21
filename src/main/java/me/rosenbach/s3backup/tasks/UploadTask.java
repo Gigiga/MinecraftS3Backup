@@ -26,7 +26,8 @@ public class UploadTask implements Runnable{
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd/HHmmss");
         String backupName = LocalDateTime.now().format(formatter)
                 .concat("_")
-                .concat(plugin.getConfig().getString(Configuration.POSTFIX.getKey(), "backup"));
+                .concat(plugin.getConfig().getString(Configuration.POSTFIX.getKey(), "backup"))
+                .concat(".zip");
 
         try {
             plugin.sendMessage(sender, "Upload starting");
